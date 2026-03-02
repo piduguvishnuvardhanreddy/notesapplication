@@ -1,0 +1,163 @@
+.register-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.register-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: var(--shadow-card), 0 0 0 1px rgba(124, 92, 252, 0.05);
+    animation: fadeUp 0.4s ease;
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.register-logo {
+    width: 48px;
+    height: 48px;
+    background: var(--accent-soft);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin: 0 auto 20px;
+}
+
+.register-card h2 {
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+}
+
+.register-subtitle {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 28px;
+}
+
+/* Reuse form-group, form-input, btn-primary from Login.css via index.css */
+.form-group {
+    margin-bottom: 14px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.form-input {
+    width: 100%;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    padding: 11px 14px;
+    transition: var(--transition);
+    outline: none;
+}
+
+.form-input:focus {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-input);
+}
+
+.form-input::placeholder {
+    color: var(--text-muted);
+}
+
+.form-input.input-error {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(255, 92, 92, 0.15);
+}
+
+.btn-primary {
+    width: 100%;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    padding: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-top: 6px;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(124, 92, 252, 0.4);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.error-msg {
+    color: var(--danger);
+    font-size: 13px;
+    margin-bottom: 12px;
+    padding: 10px 13px;
+    background: rgba(255, 92, 92, 0.08);
+    border-radius: 7px;
+    border: 1px solid rgba(255, 92, 92, 0.15);
+}
+
+.success-banner {
+    background: rgba(79, 192, 141, 0.12);
+    border: 1px solid rgba(79, 192, 141, 0.3);
+    border-radius: 10px;
+    color: var(--success);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 16px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.register-footer {
+    text-align: center;
+    margin-top: 24px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.register-footer a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.register-footer a:hover {
+    color: var(--accent-hover);
+}

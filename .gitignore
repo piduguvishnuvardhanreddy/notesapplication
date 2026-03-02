@@ -1,0 +1,9 @@
+# ── Root-level catch-all ──
+.env
+.env.*
+node_modules/
+*.log
+
+# ── OS ──
+.DS_Store
+Thumbs.db
