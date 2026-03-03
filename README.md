@@ -15,6 +15,10 @@ A full-stack notes application built with **React**, **Node.js**, **Express**, a
 | 🗑️ **Delete Notes** | Confirm dialog before deleting |
 | 🔍 **Search** | Real-time search by title or content |
 | ➕ **Floating Button** | Fixed "+ Add Note" button opens a smooth popup modal |
+| ⏳ **Loading States** | Spinner shown while fetching, saving, updating, and deleting notes |
+| ✅ **Success Toasts** | Animated toast notifications after creating or deleting a note |
+| ⚠️ **Error States** | Inline error messages and retry banner for failed API calls |
+| 🍪 **Cookie Auth** | Auth token stored in a secure 1-day cookie (`SameSite=Strict`) |
 | 📱 **Responsive** | Works across screen sizes |
 
 ---
@@ -66,6 +70,8 @@ NotesReal/
         │   ├── Register/       # Registration page
         │   ├── Navbar/         # Top navigation bar
         │   └── ProtectedRoute/ # Auth guard for dashboard
+        ├── utils/
+        │   └── cookie.js       # Cookie helpers: setCookie / getCookie / removeCookie
         ├── App.jsx             # Routes definition
         ├── main.jsx            # App entry point (BrowserRouter)
         └── index.css           # Global CSS variables & light theme
@@ -169,7 +175,11 @@ The frontend runs at **http://localhost:5173** (or 5174 if 5173 is in use).
 
 - Passwords are **hashed with bcrypt** before storing in MongoDB
 - API routes are protected by **JWT middleware** — requests without a valid token are rejected
-- JWT token is stored in **localStorage** on the client
+- JWT token is stored in a **secure cookie** (`auth_token`) with:
+  - **1-day expiry** — auto-logged out after 24 hours
+  - **`SameSite=Strict`** — prevents cross-site request forgery
+  - **`path=/`** — available app-wide
+- Cookie is set/read/deleted via `src/utils/cookie.js` — no `localStorage` used
 
 ---
 

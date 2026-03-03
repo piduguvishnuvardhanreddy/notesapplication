@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Navbar from "../Navbar";
+import { getCookie } from "../../utils/cookie";
 import "./Dashboard.css";
 
 const FONTS = [
@@ -80,7 +81,7 @@ const Dashboard = () => {
 
     // ── Fetch notes ───────────────────────────────────────────────────────────
     const fetchNotes = async () => {
-        const token = localStorage.getItem("token");
+        const token = getCookie();
         setFetchLoading(true);
         setApiError("");
         try {
@@ -102,7 +103,7 @@ const Dashboard = () => {
 
     // ── Search ────────────────────────────────────────────────────────────────
     const handleSearch = async (query) => {
-        const token = localStorage.getItem("token");
+        const token = getCookie();
         setIsSearching(!!query);
         setFetchLoading(true);
         setApiError("");
@@ -141,7 +142,7 @@ const Dashboard = () => {
             return;
         }
 
-        const token = localStorage.getItem("token");
+        const token = getCookie();
         setCreateLoading(true);
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notes`, {
@@ -176,7 +177,7 @@ const Dashboard = () => {
     };
 
     const handleUpdate = async (id) => {
-        const token = localStorage.getItem("token");
+        const token = getCookie();
         setUpdateLoading(true);
         setUpdateError("");
         try {
@@ -204,7 +205,7 @@ const Dashboard = () => {
     };
 
     const handleDelete = async () => {
-        const token = localStorage.getItem("token");
+        const token = getCookie();
         setDeleteLoading(true);
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notes/${deleteDialog.noteId}`, {

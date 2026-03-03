@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { setCookie } from "../../utils/cookie";
 import "./Login.css";
 
 const Spinner = () => (
@@ -33,7 +34,7 @@ const Login = () => {
         setLoading(true);
         try {
             const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, { email, password });
-            localStorage.setItem("token", response.data.token);
+            setCookie(response.data.token);
             navigate("/dashboard");
         } catch (err) {
             setError(err.response?.data?.error || "Login Failed. Please try again.");
