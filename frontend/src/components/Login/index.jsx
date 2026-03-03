@@ -3,6 +3,23 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "./Login.css";
 
+const Spinner = () => (
+    <svg
+        className="btn-spinner"
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        style={{ animation: "spin 0.75s linear infinite", verticalAlign: "middle" }}
+    >
+        <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+        <path d="M12 2a10 10 0 0 1 10 10" />
+    </svg>
+);
+
 const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -42,6 +59,7 @@ const Login = () => {
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
+                            disabled={loading}
                         />
                     </div>
                     <div className="form-group">
@@ -53,6 +71,7 @@ const Login = () => {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
+                            disabled={loading}
                         />
                     </div>
 
@@ -62,8 +81,8 @@ const Login = () => {
                         </p>
                     )}
 
-                    <button className="btn-primary" type="submit" disabled={loading}>
-                        {loading ? "Signing in…" : "Sign In"}
+                    <button className="btn-primary btn-primary--spinner" type="submit" disabled={loading}>
+                        {loading ? <><Spinner /> Signing in…</> : "Sign In"}
                     </button>
                 </form>
 

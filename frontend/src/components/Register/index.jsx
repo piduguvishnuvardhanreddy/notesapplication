@@ -3,6 +3,22 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import "./Register.css";
 
+const Spinner = () => (
+    <svg
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        style={{ animation: "spin 0.75s linear infinite", verticalAlign: "middle", flexShrink: 0 }}
+    >
+        <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+        <path d="M12 2a10 10 0 0 1 10 10" />
+    </svg>
+);
+
 const Register = () => {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
@@ -100,8 +116,8 @@ const Register = () => {
                             <p className="error-msg">{error}</p>
                         )}
 
-                        <button className="btn-primary" type="submit" disabled={loading}>
-                            {loading ? "Creating account…" : "Create Account"}
+                        <button className="btn-primary btn-primary--spinner" type="submit" disabled={loading}>
+                            {loading ? <><Spinner /> Creating account…</> : "Create Account"}
                         </button>
                     </form>
                 )}

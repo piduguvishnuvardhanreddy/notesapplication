@@ -11,6 +11,35 @@ const FONTS = [
     { label: "Dancing Script", value: "'Dancing Script', cursive" },
 ];
 
+// ── Spinner component ─────────────────────────────────────────────────────────
+const Spinner = ({ size = 18, color = "currentColor" }) => (
+    <svg
+        className="btn-spinner"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+    >
+        <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+        <path d="M12 2a10 10 0 0 1 10 10" />
+    </svg>
+);
+
+// ── Toast component ───────────────────────────────────────────────────────────
+const Toast = ({ toasts }) => (
+    <div className="toast-container">
+        {toasts.map((t) => (
+            <div key={t.id} className={`toast toast-${t.type}`}>
+                <span className="toast-icon">{t.type === "success" ? "✓" : "✕"}</span>
+                {t.message}
+            </div>
+        ))}
+    </div>
+);
+
 const Dashboard = () => {
     const [notes, setNotes] = useState([]);
     const [title, setTitle] = useState("");
@@ -30,12 +59,30 @@ const Dashboard = () => {
     const [activeFormats, setActiveFormats] = useState({ bold: false, italic: false, underline: false, list: false });
     const editorRef = useRef(null);
 
-    // Delete dialog state
+    // ── Loading states ────────────────────────────────────────────────────────
+    const [fetchLoading, setFetchLoading] = useState(true);   // initial & search
+    const [createLoading, setCreateLoading] = useState(false);
+    const [updateLoading, setUpdateLoading] = useState(false);
+    const [deleteLoading, setDeleteLoading] = useState(false);
+    const [updateError, setUpdateError] = useState("");
+
+    // ── Toast state ───────────────────────────────────────────────────────────
+    const [toasts, setToasts] = useState([]);
+
+    const showToast = (message, type = "success") => {
+        const id = Date.now();
+        setToasts((prev) => [...prev, { id, message, type }]);
+        setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3000);
+    };
+
+    // ── Delete dialog state ───────────────────────────────────────────────────
     const [deleteDialog, setDeleteDialog] = useState({ open: false, noteId: null, noteTitle: "" });
 
-    // ── Fetch notes ──────────────────
+    // ── Fetch notes ───────────────────────────────────────────────────────────
     const fetchNotes = async () => {
         const token = localStorage.getItem("token");
+        setFetchLoading(true);
+        setApiError("");
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notes`, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -43,19 +90,22 @@ const Dashboard = () => {
             if (!res.ok) throw new Error(`Server error: ${res.status}`);
             const data = await res.json();
             setNotes(data);
-            setApiError("");
         } catch (err) {
             setApiError("Could not load notes. Please check your connection and try again.");
             console.log("Failed to fetch notes", err);
+        } finally {
+            setFetchLoading(false);
         }
     };
 
     useEffect(() => { fetchNotes(); }, []);
 
-    // ── Search ───────────────────────────
+    // ── Search ────────────────────────────────────────────────────────────────
     const handleSearch = async (query) => {
         const token = localStorage.getItem("token");
         setIsSearching(!!query);
+        setFetchLoading(true);
+        setApiError("");
         try {
             if (!query) {
                 const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notes`, {
@@ -64,7 +114,6 @@ const Dashboard = () => {
                 if (!res.ok) throw new Error();
                 const data = await res.json();
                 setNotes(data);
-                setApiError("");
                 return;
             }
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notes/search?query=${encodeURIComponent(query)}`, {
@@ -73,14 +122,15 @@ const Dashboard = () => {
             if (!res.ok) throw new Error();
             const data = await res.json();
             setNotes(data);
-            setApiError("");
         } catch (err) {
             setApiError("Search failed. Please check your connection and try again.");
             console.log("Failed to search notes", err);
+        } finally {
+            setFetchLoading(false);
         }
     };
 
-    // ── Create ───────────────────────────
+    // ── Create ────────────────────────────────────────────────────────────────
     const handleCreateNote = async (e) => {
         e.preventDefault();
         setCreateError("");
@@ -92,12 +142,14 @@ const Dashboard = () => {
         }
 
         const token = localStorage.getItem("token");
+        setCreateLoading(true);
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notes`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ title, content, font: selectedFont })
             });
+            if (!res.ok) throw new Error(`Server error: ${res.status}`);
             const newNote = await res.json();
             setNotes([newNote, ...notes]);
             setTitle("");
@@ -105,51 +157,68 @@ const Dashboard = () => {
             setSelectedFont(FONTS[0].value);
             if (editorRef.current) editorRef.current.innerHTML = "";
             setShowModal(false);
+            showToast("Note created successfully!");
         } catch (err) {
+            setCreateError("Failed to save note. Please try again.");
             console.log("Failed to create note", err);
+        } finally {
+            setCreateLoading(false);
         }
     };
 
-    // ── Edit ─────────────────────────────
+    // ── Edit ──────────────────────────────────────────────────────────────────
     const startEditing = (note) => {
         setEditingNoteId(note._id);
         setEditingTitle(note.title);
         setEditingContent(note.content);
         setEditingFont(note.font || FONTS[0].value);
+        setUpdateError("");
     };
 
     const handleUpdate = async (id) => {
         const token = localStorage.getItem("token");
+        setUpdateLoading(true);
+        setUpdateError("");
         try {
             const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notes/${id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ title: editingTitle, content: editingContent, font: editingFont })
             });
+            if (!res.ok) throw new Error(`Server error: ${res.status}`);
             const updatedNote = await res.json();
             setNotes(notes.map(n => n._id === id ? updatedNote : n));
             setEditingNoteId(null);
+            showToast("Note updated!");
         } catch (err) {
+            setUpdateError("Failed to save changes. Please try again.");
             console.log("Failed to update note", err);
+        } finally {
+            setUpdateLoading(false);
         }
     };
 
-    // ── Delete (with dialog) ─────────────
+    // ── Delete (with dialog) ──────────────────────────────────────────────────
     const confirmDelete = (note) => {
         setDeleteDialog({ open: true, noteId: note._id, noteTitle: note.title });
     };
 
     const handleDelete = async () => {
         const token = localStorage.getItem("token");
+        setDeleteLoading(true);
         try {
-            await fetch(`${import.meta.env.VITE_API_URL}/api/notes/${deleteDialog.noteId}`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/notes/${deleteDialog.noteId}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` }
             });
+            if (!res.ok) throw new Error(`Server error: ${res.status}`);
             setNotes(notes.filter(n => n._id !== deleteDialog.noteId));
+            showToast("Note deleted.");
         } catch (err) {
+            showToast("Failed to delete note. Please try again.", "error");
             console.log("Failed to delete note", err);
         } finally {
+            setDeleteLoading(false);
             setDeleteDialog({ open: false, noteId: null, noteTitle: "" });
         }
     };
@@ -179,6 +248,115 @@ const Dashboard = () => {
         return FONTS.find(f => f.value === fontVal)?.label || "";
     };
 
+    // ── Notes area (loading / error / list) ───────────────────────────────────
+    const renderNotes = () => {
+        if (fetchLoading) {
+            return (
+                <div className="notes-loader">
+                    <div className="notes-spinner" />
+                    <p>{isSearching ? "Searching…" : "Loading your notes…"}</p>
+                </div>
+            );
+        }
+
+        if (apiError) return null; // already shown in the banner above
+
+        if (notes.length === 0) {
+            return (
+                <div className="notes-empty">
+                    {isSearching ? (
+                        <>
+                            <span>🔎</span>
+                            No notes matching <strong>"{searchQuery}"</strong> were found.
+                        </>
+                    ) : (
+                        <>
+                            <span>📭</span>
+                            No notes yet. Click <strong>+ Add Note</strong> to get started!
+                        </>
+                    )}
+                </div>
+            );
+        }
+
+        return (
+            <ul className="notes-list">
+                {notes.map(note => (
+                    <li key={note._id}>
+                        {editingNoteId === note._id ? (
+                            <div className="note-edit-card">
+                                <input
+                                    className="edit-input"
+                                    value={editingTitle}
+                                    placeholder="Note title"
+                                    onChange={(e) => setEditingTitle(e.target.value)}
+                                />
+                                <textarea
+                                    className="edit-textarea"
+                                    value={editingContent}
+                                    placeholder="Note content"
+                                    onChange={(e) => setEditingContent(e.target.value)}
+                                    style={{ fontFamily: editingFont }}
+                                />
+                                <div className="font-picker-row">
+                                    <label>Font:</label>
+                                    <select
+                                        className="font-select"
+                                        value={editingFont}
+                                        onChange={(e) => setEditingFont(e.target.value)}
+                                    >
+                                        {FONTS.map(f => (
+                                            <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
+                                                {f.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                {updateError && <p className="inline-error">{updateError}</p>}
+                                <div className="edit-actions">
+                                    <button
+                                        className="btn-save"
+                                        onClick={() => handleUpdate(note._id)}
+                                        disabled={updateLoading}
+                                    >
+                                        {updateLoading ? (
+                                            <><Spinner size={14} color="#fff" /> Saving…</>
+                                        ) : "✓ Save"}
+                                    </button>
+                                    <button
+                                        className="btn-cancel"
+                                        onClick={() => setEditingNoteId(null)}
+                                        disabled={updateLoading}
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div
+                                className="note-card"
+                                style={{ fontFamily: note.font || FONTS[0].value }}
+                            >
+                                <p className="note-meta">
+                                    {formatDate(note.createdAt)}
+                                    {note.font && note.font !== FONTS[0].value && (
+                                        <span className="note-font-label">{getFontLabel(note.font)}</span>
+                                    )}
+                                </p>
+                                <h3>{note.title}</h3>
+                                <p dangerouslySetInnerHTML={{ __html: note.content }} />
+                                <div className="note-actions">
+                                    <button className="btn-edit" onClick={() => startEditing(note)}>✏️ Edit</button>
+                                    <button className="btn-delete" onClick={() => confirmDelete(note)}>🗑 Delete</button>
+                                </div>
+                            </div>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        );
+    };
+
     return (
         <>
             <Navbar />
@@ -190,7 +368,7 @@ const Dashboard = () => {
                     <p>Capture ideas, thoughts, and everything in between.</p>
                 </div>
 
-                {/* Search — single instance */}
+                {/* Search */}
                 <div className="search-bar">
                     <span className="search-icon">🔍</span>
                     <input
@@ -219,100 +397,26 @@ const Dashboard = () => {
                     </div>
                 )}
 
-                {/* Notes List */}
+                {/* Notes Section */}
                 <div className="notes-section">
-                    <h2>All Notes ({notes.length})</h2>
-                    {notes.length === 0 ? (
-                        <div className="notes-empty">
-                            {isSearching ? (
-                                <>
-                                    <span>🔎</span>
-                                    No notes matching <strong>"{searchQuery}"</strong> were found.
-                                </>
-                            ) : (
-                                <>
-                                    <span>📭</span>
-                                    No notes yet. Click <strong>+ Add Note</strong> to get started!
-                                </>
-                            )}
-                        </div>
-                    ) : (
-                        <ul className="notes-list">
-                            {notes.map(note => (
-                                <li key={note._id}>
-                                    {editingNoteId === note._id ? (
-                                        <div className="note-edit-card">
-                                            <input
-                                                className="edit-input"
-                                                value={editingTitle}
-                                                placeholder="Note title"
-                                                onChange={(e) => setEditingTitle(e.target.value)}
-                                            />
-                                            <textarea
-                                                className="edit-textarea"
-                                                value={editingContent}
-                                                placeholder="Note content"
-                                                onChange={(e) => setEditingContent(e.target.value)}
-                                                style={{ fontFamily: editingFont }}
-                                            />
-                                            <div className="font-picker-row">
-                                                <label>Font:</label>
-                                                <select
-                                                    className="font-select"
-                                                    value={editingFont}
-                                                    onChange={(e) => setEditingFont(e.target.value)}
-                                                >
-                                                    {FONTS.map(f => (
-                                                        <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
-                                                            {f.label}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                            <div className="edit-actions">
-                                                <button className="btn-save" onClick={() => handleUpdate(note._id)}>✓ Save</button>
-                                                <button className="btn-cancel" onClick={() => setEditingNoteId(null)}>Cancel</button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div
-                                            className="note-card"
-                                            style={{ fontFamily: note.font || FONTS[0].value }}
-                                        >
-                                            <p className="note-meta">
-                                                {formatDate(note.createdAt)}
-                                                {note.font && note.font !== FONTS[0].value && (
-                                                    <span className="note-font-label">{getFontLabel(note.font)}</span>
-                                                )}
-                                            </p>
-                                            <h3>{note.title}</h3>
-                                            <p dangerouslySetInnerHTML={{ __html: note.content }} />
-                                            <div className="note-actions">
-                                                <button className="btn-edit" onClick={() => startEditing(note)}>✏️ Edit</button>
-                                                <button className="btn-delete" onClick={() => confirmDelete(note)}>🗑 Delete</button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
+                    <h2>All Notes {!fetchLoading && `(${notes.length})`}</h2>
+                    {renderNotes()}
                 </div>
             </div>
 
-            {/* ── Floating Add Note Button ── */}
+            {/* Floating Add Note Button */}
             <button className="fab-btn" onClick={() => setShowModal(true)} title="Add Note">
                 <span className="fab-icon">+</span>
                 <span className="fab-label">Add Note</span>
             </button>
 
-            {/* ── Add Note Modal ── */}
+            {/* Add Note Modal */}
             {showModal && (
-                <div className="modal-overlay" onClick={() => setShowModal(false)}>
+                <div className="modal-overlay" onClick={() => !createLoading && setShowModal(false)}>
                     <div className="modal-box" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2>New Note</h2>
-                            <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
+                            <button className="modal-close" onClick={() => !createLoading && setShowModal(false)}>✕</button>
                         </div>
                         <form onSubmit={handleCreateNote}>
                             <input
@@ -322,6 +426,7 @@ const Dashboard = () => {
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 required
+                                disabled={createLoading}
                             />
 
                             <div className="font-picker-row">
@@ -335,6 +440,7 @@ const Dashboard = () => {
                                         className={`font-chip ${selectedFont === f.value ? "active" : ""}`}
                                         style={{ fontFamily: f.value }}
                                         onClick={() => setSelectedFont(f.value)}
+                                        disabled={createLoading}
                                     >
                                         {f.label}
                                     </button>
@@ -351,7 +457,7 @@ const Dashboard = () => {
                             <div
                                 ref={editorRef}
                                 className="content-editor"
-                                contentEditable
+                                contentEditable={!createLoading}
                                 suppressContentEditableWarning
                                 data-placeholder="Write your note here…"
                                 onKeyUp={syncFormats}
@@ -360,14 +466,25 @@ const Dashboard = () => {
                                     setContent(e.currentTarget.innerHTML);
                                     setCreateError("");
                                 }}
-                                style={{ fontFamily: selectedFont }}
+                                style={{ fontFamily: selectedFont, opacity: createLoading ? 0.6 : 1 }}
                             ></div>
 
                             {createError && <p className="editor-error">{createError}</p>}
 
                             <div className="modal-footer">
-                                <button type="button" className="btn-modal-cancel" onClick={() => setShowModal(false)}>Cancel</button>
-                                <button className="btn-create" type="submit">+ Add Note</button>
+                                <button
+                                    type="button"
+                                    className="btn-modal-cancel"
+                                    onClick={() => setShowModal(false)}
+                                    disabled={createLoading}
+                                >
+                                    Cancel
+                                </button>
+                                <button className="btn-create" type="submit" disabled={createLoading}>
+                                    {createLoading ? (
+                                        <><Spinner size={15} color="#fff" /> Saving…</>
+                                    ) : "+ Add Note"}
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -376,7 +493,7 @@ const Dashboard = () => {
 
             {/* Delete Confirm Dialog */}
             {deleteDialog.open && (
-                <div className="dialog-overlay" onClick={() => setDeleteDialog({ open: false, noteId: null, noteTitle: "" })}>
+                <div className="dialog-overlay" onClick={() => !deleteLoading && setDeleteDialog({ open: false, noteId: null, noteTitle: "" })}>
                     <div className="dialog-box" onClick={(e) => e.stopPropagation()}>
                         <div className="dialog-icon">🗑️</div>
                         <h3>Delete Note?</h3>
@@ -388,16 +505,26 @@ const Dashboard = () => {
                             <button
                                 className="btn-dialog-cancel"
                                 onClick={() => setDeleteDialog({ open: false, noteId: null, noteTitle: "" })}
+                                disabled={deleteLoading}
                             >
                                 Cancel
                             </button>
-                            <button className="btn-dialog-delete" onClick={handleDelete}>
-                                Delete
+                            <button
+                                className="btn-dialog-delete"
+                                onClick={handleDelete}
+                                disabled={deleteLoading}
+                            >
+                                {deleteLoading ? (
+                                    <><Spinner size={14} color="#fff" /> Deleting…</>
+                                ) : "Delete"}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
+
+            {/* Toast Notifications */}
+            <Toast toasts={toasts} />
         </>
     );
 };

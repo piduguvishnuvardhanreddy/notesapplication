@@ -814,3 +814,143 @@
     background: #f5f5f7;
     border-color: #ccc;
 }
+
+/* ── Spinner ─────────────────────────────────────────────────────────────────*/
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.btn-spinner {
+    animation: spin 0.75s linear infinite;
+    flex-shrink: 0;
+    vertical-align: middle;
+}
+
+/* ── Notes loading state ─────────────────────────────────────────────────────*/
+.notes-loader {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 64px 24px;
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.notes-spinner {
+    width: 38px;
+    height: 38px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+}
+
+/* ── Toast notifications ─────────────────────────────────────────────────────*/
+.toast-container {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    pointer-events: none;
+    white-space: nowrap;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: toastIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+        toastOut 0.3s ease 2.7s both;
+}
+
+.toast-success {
+    background: rgba(79, 192, 141, 0.92);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.toast-error {
+    background: rgba(229, 62, 62, 0.92);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.toast-icon {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes toastOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+    }
+}
+
+/* ── Inline update error (edit card) ─────────────────────────────────────────*/
+.inline-error {
+    color: var(--danger);
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    background: rgba(229, 62, 62, 0.07);
+    border: 1px solid rgba(229, 62, 62, 0.2);
+    border-radius: 6px;
+}
+
+/* ── Disabled-state for loading buttons ──────────────────────────────────────*/
+.btn-save:disabled,
+.btn-create:disabled,
+.btn-dialog-delete:disabled,
+.btn-modal-cancel:disabled,
+.btn-dialog-cancel:disabled,
+.btn-cancel:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.btn-save,
+.btn-create,
+.btn-dialog-delete {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
