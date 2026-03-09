@@ -77,12 +77,12 @@ exports.deleteNote = async (req, res) => {
 
 exports.searchNotes = async (req, res) => {
     try {
-        const { query } = req.query;
+        const { q } = req.query;
         const notes = await Note.find({
             user: req.user.userId,
             $or: [
-                { title: { $regex: query, $options: "i" } },
-                { content: { $regex: query, $options: "i" } }
+                { title: { $regex: q, $options: "i" } },
+                { content: { $regex: q, $options: "i" } }
             ]
         })
         res.json(notes)
